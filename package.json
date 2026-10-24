@@ -4,6 +4,16 @@
   "private": true,
   "type": "module",
   "description": "Per-turn adaptive reasoning effort for DeepSeek Harness",
+  "license": "MIT",
+  "author": "Hiel Gagarin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HielG/dsh-adaptive-effort.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HielG/dsh-adaptive-effort/issues"
+  },
+  "homepage": "https://github.com/HielG/dsh-adaptive-effort#readme",
   "exports": {
     ".": "./adaptive-effort.js"
   },
