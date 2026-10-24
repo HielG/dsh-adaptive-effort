@@ -16,6 +16,11 @@ const cases = [
   ['refactor, migrate, and audit the schema', 'max'],
   ['think hard: what is the root cause of the deadlock?', 'max'],
   [`${'x'.repeat(900)} refactor the migration`, 'max'],
+  ['brainstorm ideas for the trading app', 'high'],
+  ['help me enrich the concept for NetMechanic Connect', 'high'],
+  ["let's idealize the onboarding flow", 'high'],
+  ['what should our positioning be for the resort project?', 'high'],
+  ['enrich this concept: a local delivery network for small farms', 'high'],
 ];
 
 let failures = 0;

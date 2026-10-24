@@ -30,6 +30,8 @@ const DEFAULTS = {
   complexCues: 3,
   /** Effort for social turns; 'low' if you would rather never disable thinking. */
   socialEffort: 'off',
+  /** Floor for concept work (brainstorming, idealization, positioning); try 'max' for deeper drafts. */
+  ideationEffort: 'high',
   /** Append one line per decision to %TEMP%\dsh-adaptive-effort.log. */
   debug: true,
 };
@@ -56,6 +58,13 @@ function isSocial(text) {
 const WANTS_MAX = /(?:think (?:hard|harder|deeply|carefully)|max(?:imum)? (?:effort|thinking|reasoning)|deep dive|be (?:very )?thorough|exhaustive)/;
 const WANTS_LOW = /(?:quick(?:ly)?|simple|one-?liner|short answer|tl;?dr|just tell me)/;
 
+/**
+ * Concept work: brainstorming, idealization, positioning, enrichment. These turns
+ * produce options instead of running tools, so they earn a real budget even when
+ * the prompt is short.
+ */
+const IDEATION = /\b(?:brainstorm\w*|ideat\w*|idealiz\w*|concept\w*|ideas?|vision|positioning|differentiat\w*|narrative|personas?|roadmap|what if|explor\w*|approach\w*|enrich\w*|prd|business models?|go-to-market|pitch\w*|angle)\b/g;
+
 /** Count matches of one global pattern; `String.match` ignores `lastIndex`. */
 function count(text, pattern) {
   return (text.match(pattern) || []).length;
@@ -77,6 +86,7 @@ export function classify(text, config) {
   const hasCode = trimmed.includes('```') || /(^|\n)\s{4,}\S/.test(trimmed);
   const complexity = count(lower, COMPLEXITY);
   const judgment = count(lower, JUDGMENT);
+  const ideation = count(lower, IDEATION);
 
   if (isSocial(trimmed)) return { level: cfg.socialEffort, reason: 'social' };
   if (WANTS_MAX.test(lower)) return { level: 'max', reason: 'explicit-max' };
@@ -85,6 +95,7 @@ export function classify(text, config) {
   if (length >= cfg.longChars && complexity >= 2) return { level: 'max', reason: 'long+cues' };
   // Pasted code without a complexity cue still deserves the standard budget.
   if (hasCode) return { level: 'high', reason: 'code' };
+  if (ideation > 0) return { level: cfg.ideationEffort, reason: 'ideation' };
   if (WANTS_LOW.test(lower) && complexity === 0) return { level: 'low', reason: 'explicit-low' };
   if (complexity === 0 && judgment === 0 && length <= cfg.trivialMaxChars) {
     return { level: 'low', reason: 'trivial' };
