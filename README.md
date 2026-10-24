@@ -31,6 +31,15 @@ Nothing is written to the session log, no messages are modified, and no extra
 model call is made — the plugin costs zero tokens beyond the effect it has on
 reasoning itself.
 
+### The composer effort chip
+
+The chip reads the session's `modelSelection` view — `pending ?? lastUsed`.
+`lastUsed` is folded from every `request/header`, so after a turn it shows the level
+the plugin actually used. A manual menu pick is stored as `pending` and clears only
+when a request runs with it; the plugin therefore leaves one turn alone whenever a
+pick is pending. Without that, the chip would keep advertising a level no request
+ever used.
+
 ### Token economics it relies on
 
 Reasoning effort costs twice: the thinking tokens are output tokens now, and

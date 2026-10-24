@@ -129,6 +129,23 @@ export function classify(text, config) {
   return { level: 'high', reason: judgment > 0 ? 'work' : 'complexity' };
 }
 
+/**
+ * True while the session carries a menu pick that no request has used yet.
+ * The projection's `pending` field clears only when a request runs with it, so
+ * skipping the override for that turn keeps the composer chip honest.
+ */
+function hasPendingSelection(ctx, agent) {
+  try {
+    const projections = typeof ctx.get === 'function' ? ctx.get('sessionProjections') : ctx.sessionProjections;
+    const state = projections && typeof projections.stateOf === 'function'
+      ? projections.stateOf(agent.session, 'modelSelection')
+      : undefined;
+    return state !== undefined && state !== null && state.pending != null;
+  } catch {
+    return false;
+  }
+}
+
 /** Pull the newest user-authored text out of an admitted step batch. */
 function latestUserText(messages) {
   if (!Array.isArray(messages)) return undefined;
@@ -210,6 +227,11 @@ export function apply(ctx, config) {
               if (wanted === undefined || current === undefined) return resolved;
               // A user-selected `off` is a deliberate choice; ours is not.
               if (current === 'off' && state.applied !== 'off') return resolved;
+              // A fresh menu pick is stored as `pending` and the UI shows it until a
+              // request consumes it. Overriding here leaves that pick pending forever,
+              // so the composer keeps advertising a level nobody used. Let it through
+              // for one turn, then adaptivity (and the chip) resume.
+              if (hasPendingSelection(ctx, agent)) return resolved;
               if (wanted === current) {
                 state.applied = current;
                 return resolved;

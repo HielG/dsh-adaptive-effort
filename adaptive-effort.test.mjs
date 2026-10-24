@@ -47,6 +47,7 @@ for (const [text, expected] of cases) {
 }
 
 // --- listener simulation: stub the two cordis contexts -----------------------
+let pendingSelection = null;
 const rootHandlers = new Map();
 const rootCtx = {
   effect(run) {
@@ -58,6 +59,10 @@ const rootCtx = {
     list.push(listener);
     rootHandlers.set(name, list);
     return () => {};
+  },
+  get(name) {
+    if (name !== 'sessionProjections') return undefined;
+    return { stateOf: () => ({ lastUsed: null, pending: pendingSelection }) };
   },
 };
 
@@ -101,6 +106,13 @@ check((await turn(main, 'fix the bug', 'off')).reasoningEffort === 'high', 'our 
 check((await turn(main, 'hi', 'low')).reasoningEffort === 'off', 'social turn overrides a low selection with off');
 check((await turn(main, "what's 2+2?", 'low')).reasoningEffort === 'low', 'trivial turn keeps an already-low level');
 check((await turn(main, 'refactor x', 'high')).reasoningEffort === 'high', 'single cue stays high');
+
+// A fresh menu pick is honored for one turn, then adaptivity resumes.
+const pendingAgent = newAgent();
+pendingSelection = { provider: 'p', model: 'm', reasoningEffort: 'low' };
+check((await turn(pendingAgent, 'fix the bug', 'low')).reasoningEffort === 'low', 'a pending menu pick is not overridden');
+pendingSelection = null;
+check((await turn(pendingAgent, 'fix the bug', 'low')).reasoningEffort === 'high', 'adaptivity resumes after the pick is consumed');
 
 const fresh = newAgent();
 const untouched = await fresh.request({}, async () => ({ provider: 'p', model: 'm', reasoningEffort: 'off' }));
