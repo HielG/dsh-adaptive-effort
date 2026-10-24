@@ -30,8 +30,13 @@ const DEFAULTS = {
   complexCues: 3,
   /** Effort for social turns; 'low' if you would rather never disable thinking. */
   socialEffort: 'off',
-  /** Floor for concept work (brainstorming, idealization, positioning); try 'max' for deeper drafts. */
-  ideationEffort: 'high',
+  /**
+   * Concept work is the seed: the vision and framing every later turn inherits,
+   * and reasoning passback keeps its chain of thought available to them. Pay once.
+   */
+  ideationEffort: 'max',
+  /** Planning/spec work shapes the build the same way; lower it if plans feel routine. */
+  planningEffort: 'max',
   /** Append one line per decision to %TEMP%\dsh-adaptive-effort.log. */
   debug: true,
 };
@@ -60,10 +65,13 @@ const WANTS_LOW = /(?:quick(?:ly)?|simple|one-?liner|short answer|tl;?dr|just te
 
 /**
  * Concept work: brainstorming, idealization, positioning, enrichment. These turns
- * produce options instead of running tools, so they earn a real budget even when
- * the prompt is short.
+ * produce the seed every later turn inherits, so they earn the deepest budget even
+ * when the prompt is short. Weak signals ("what if", "explore") stay out on purpose.
  */
-const IDEATION = /\b(?:brainstorm\w*|ideat\w*|idealiz\w*|concept\w*|ideas?|vision|positioning|differentiat\w*|narrative|personas?|roadmap|what if|explor\w*|approach\w*|enrich\w*|prd|business models?|go-to-market|pitch\w*|angle)\b/g;
+const IDEATION = /\b(?:brainstorm\w*|ideat\w*|idealiz\w*|concept\w*|ideas?|vision|positioning|value proposition|differentiat\w*|narrative|personas?|business models?|go-to-market|pitch\w*|enrich\w*)\b/g;
+
+/** Planning and specification: the same "pay once, inherit afterwards" shape. */
+const PLANNING = /\b(?:plan(?:s|ning|ned)?|roadmap\w*|milestone\w*|scope|phases?|architect\w*|blueprint\w*|spec\w*|prd|design docs?|backlog|sequenc\w*|tech stack)\b/g;
 
 /** Count matches of one global pattern; `String.match` ignores `lastIndex`. */
 function count(text, pattern) {
@@ -87,15 +95,18 @@ export function classify(text, config) {
   const complexity = count(lower, COMPLEXITY);
   const judgment = count(lower, JUDGMENT);
   const ideation = count(lower, IDEATION);
+  const planning = count(lower, PLANNING);
 
   if (isSocial(trimmed)) return { level: cfg.socialEffort, reason: 'social' };
   if (WANTS_MAX.test(lower)) return { level: 'max', reason: 'explicit-max' };
   if (complexity >= cfg.complexCues) return { level: 'max', reason: `cues:${complexity}` };
   if (hasCode && complexity >= 1) return { level: 'max', reason: 'code+cue' };
   if (length >= cfg.longChars && complexity >= 2) return { level: 'max', reason: 'long+cues' };
+  // Seed work runs before the code check: "plan this" over a paste still plans.
+  if (planning > 0) return { level: cfg.planningEffort, reason: 'planning' };
+  if (ideation > 0) return { level: cfg.ideationEffort, reason: 'ideation' };
   // Pasted code without a complexity cue still deserves the standard budget.
   if (hasCode) return { level: 'high', reason: 'code' };
-  if (ideation > 0) return { level: cfg.ideationEffort, reason: 'ideation' };
   if (WANTS_LOW.test(lower) && complexity === 0) return { level: 'low', reason: 'explicit-low' };
   if (complexity === 0 && judgment === 0 && length <= cfg.trivialMaxChars) {
     return { level: 'low', reason: 'trivial' };

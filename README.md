@@ -9,7 +9,7 @@ turn** instead of pinning one level for the whole session.
 | "hi", "thanks!", "ok 👍" | `off` | no reasoning, and no chain-of-thought passed back into later requests |
 | "what's the latest version?", "rename the folder", "show the files" | `low` | short, no complexity cue, no judgment verb |
 | "fix the bug", "add a button", "why does it drop connections?" | `high` | judgment work; the harness default |
-| "brainstorm ideas", "enrich this concept", "positioning for X" | `high` | concept work produces options rather than tool calls, so a short prompt still earns a budget |
+| "brainstorm ideas", "enrich this concept", "positioning for X", "plan the migration", "write a roadmap", "draft the spec" | `max` | seed work: the vision and plan every later turn inherits |
 | code pasted with a complexity cue, ≥ 3 complexity cues, ≥ 900 chars with 2 cues, or an explicit "think hard" / "max effort" | `max` | genuine complexity, or you asked for it |
 
 An explicit `off` selected in the UI is never overridden. A model that reports no
@@ -86,7 +86,8 @@ add a normal patch entry to the profile's `cordis.patch.yml`:
 | `longChars` | `900` | At or above this length, two complexity cues escalate to `max` |
 | `complexCues` | `3` | Complexity cues that escalate to `max` on their own |
 | `socialEffort` | `off` | Level for social turns; set `low` if you never want thinking disabled |
-| `ideationEffort` | `high` | Floor for concept work (brainstorm, idealize, enrich, positioning); set `max` for deeper ideation |
+| `ideationEffort` | `max` | Level for concept work (brainstorm, idealize, enrich, positioning); set `high` if max feels heavy |
+| `planningEffort` | `max` | Level for plans, roadmaps, milestones, specs, architecture; set `high` for routine plans |
 | `debug` | `true` | One line per decision in `%TEMP%\dsh-adaptive-effort.log` |
 
 The debug log records the reason, so spend is auditable:
