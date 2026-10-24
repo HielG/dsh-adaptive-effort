@@ -1,0 +1,5 @@
+- insert:
+    - id: adaptive-effort
+      name: dsh-adaptive-effort
+      config:
+        debug: true

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Adaptive Effort",
+    "description": "Picks off/low/high/max reasoning effort per turn from the prompt instead of pinning one level for the whole session."
+  }
+}

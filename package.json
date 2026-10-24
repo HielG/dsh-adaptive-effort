@@ -1,6 +1,6 @@
 {
   "name": "dsh-adaptive-effort",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Per-turn adaptive reasoning effort for DeepSeek Harness",
@@ -15,11 +15,25 @@
   },
   "homepage": "https://github.com/HielG/dsh-adaptive-effort#readme",
   "exports": {
-    ".": "./adaptive-effort.js"
+    ".": "./adaptive-effort.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "adaptive-effort.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
   },
   "scripts": {
-    "test": "node adaptive-effort.test.mjs",
-    "deploy": "pwsh -File deploy.ps1"
+    "test": "node adaptive-effort.test.mjs"
   },
   "keywords": [
     "deepseek-harness",

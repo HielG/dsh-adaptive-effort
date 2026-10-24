@@ -39,30 +39,45 @@ independent signals rather than "the prompt looked long".
 
 ## Install
 
-1. Deploy the module into the desktop profile:
+This package is a **DSH bundle**: `package.json` declares `dsh.bundle.patch`, and
+[`cordis.patch.yml`](./cordis.patch.yml) inserts the plugin row. Installed that
+way it appears in the Harness **Plugins** tab with its title, description, and
+icon.
 
-   ```powershell
-   pwsh -File deploy.ps1
-   ```
+- **From the Harness UI:** open *Plugins* and install this directory as a bundle
+  (Creator-preset sessions expose the `plugin_manager` tool with
+  `action: install_bundle` and this package directory as `target`).
+- **Manually:** add it to the profile manifest and install:
 
-2. Add the row to `~/.dsh/profiles/desktop/cordis.patch.yml` (once):
+  ```jsonc
+  // ~/.dsh/profiles/<profile>/package.json
+  {
+    "dependencies": { "dsh-adaptive-effort": "file:/path/to/dsh-adaptive-effort" },
+    "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-adaptive-effort"] } }
+  }
+  ```
 
-   ```yaml
-   - insert:
-       - id: adaptive-effort
-         name: ./plugins/adaptive-effort.js
-         config:
-           debug: true
-   ```
+  ```powershell
+  pnpm install --dir "$env:USERPROFILE\.dsh\profiles\desktop"
+  ```
 
-   Relative entry paths are anchored beside the patch file.
+Either way, restart DSH afterwards: the profile is composed at boot.
 
-3. Restart DSH. The profile is composed at boot, so a running app keeps the old
-   generation.
+> A bundle dependency is a copy. After editing this checkout, run
+> `pnpm install --dir <profile>` again (or reinstall the bundle) and restart.
 
 ## Tuning
 
-All fields are optional `config` keys on that row:
+Thresholds are `config` fields on the `adaptive-effort` row. To override them,
+add a normal patch entry to the profile's `cordis.patch.yml`:
+
+```yaml
+- id: adaptive-effort
+  name: dsh-adaptive-effort
+  config:
+    debug: true
+    socialEffort: low
+```
 
 | Field | Default | Meaning |
 | --- | --- | --- |
@@ -85,8 +100,10 @@ The debug log records the reason, so spend is auditable:
 - **Verify:** the log contains the `active` line after a restart, then one line per
   classified turn. The session's logged `request/header` carries the level actually
   used.
-- **Disable:** add `disabled: true` to the row, or remove it.
-- **Remove:** delete the row and `~/.dsh/profiles/desktop/plugins/adaptive-effort.js`.
+- **Disable:** toggle the bundle off in the Plugins tab, or add `disabled: true`
+  to the row override.
+- **Remove:** remove the bundle from the Plugins tab (or from the profile
+  manifest, then `pnpm install`).
 
 ## Development
 
@@ -101,4 +118,6 @@ guard that keeps a user-selected `off` from being overridden.
 | --- | --- |
 | `adaptive-effort.js` | The plugin (dependency-free, Node builtins only) |
 | `adaptive-effort.test.mjs` | Classifier cases + listener simulation |
-| `deploy.ps1` | Copies the plugin into the desktop profile |
+| `cordis.patch.yml` | Bundle patch that inserts the plugin row |
+| `locale/en.json`, `locale/zh.json` | Display metadata for the Plugins tab |
+| `icon.svg` | Plugin icon |
