@@ -8,7 +8,7 @@ turn** instead of pinning one level for the whole session.
 | --- | --- | --- |
 | "hi", "thanks!", "ok 👍" | `off` | no reasoning, and no chain-of-thought passed back into later requests |
 | "what's the latest version?", "rename the folder", "show the files" | `low` | short, no complexity cue, no judgment verb |
-| "fix the bug", "add a button", "why does it drop connections?" | `high` | judgment work; the harness default |
+| "fix the bug", "add a button", "verify the migration", "check the output", "why does it drop connections?" | `high` | judgment work; the harness default |
 | "brainstorm ideas", "enrich this concept", "positioning for X", "plan the migration", "write a roadmap", "draft the spec" | `max` | seed work: the vision and plan every later turn inherits |
 | code pasted with a complexity cue, ≥ 3 complexity cues, ≥ 900 chars with 2 cues, or an explicit "think hard" / "max effort" | `max` | genuine complexity, or you asked for it |
 

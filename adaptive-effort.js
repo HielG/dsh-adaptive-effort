@@ -45,7 +45,7 @@ const DEFAULTS = {
 const COMPLEXITY = /\b(?:refactor\w*|rewrite|migrat\w*|architect\w*|design\w*|debug\w*|diagnos\w*|root cause|stack trace|traceback|performance|benchmark\w*|profil\w*|concurren\w*|race condition|deadlock|security|vulnerab\w*|audit\w*|algorithm\w*|multi-step|end-to-end|integrat\w*|schema|analy\w*|investigat\w*|evaluat\w*|compar\w*|strateg\w*|prove|proving|deriv\w*|implement\w*|complex|codebase|thorough\w*|trade-?offs?|optimi[sz]\w*)\b/g;
 
 /** Verbs and question forms that mean the turn needs judgment, not just a tool call. */
-const JUDGMENT = /\b(?:fix|add|write|create|build|update|change|implement\w*|refactor\w*|migrat\w*|design\w*|debug\w*|explain|review|plan|analy[sz]\w*|compar\w*|evaluat\w*|optimi[sz]\w*|investigat\w*|audit\w*|diagnos\w*|test|install|configure|set up|why|how does|how do|what happens|error\w*|fail\w*|broken|crash\w*)\b/g;
+const JUDGMENT = /\b(?:fix|add|write|create|build|update|change|implement\w*|refactor\w*|migrat\w*|design\w*|debug\w*|explain|review|plan|analy[sz]\w*|compar\w*|evaluat\w*|optimi[sz]\w*|investigat\w*|audit\w*|diagnos\w*|test|install|configure|set up|verif\w*|check\w*|confirm\w*|why|how does|how do|what happens|error\w*|fail\w*|broken|crash\w*)\b/g;
 
 /** Whole-turn social filler: no reasoning budget is warranted. */
 const SOCIAL_WORDS = new Set([
