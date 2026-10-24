@@ -9,7 +9,10 @@ const cases = [
   ['quick question — what time is it?', 'low'],
   ['fix the bug in main.js', 'high'],
   ['add a download button to the header', 'high'],
-  ['restarted, please verify', 'high'],
+  ['restarted, please verify', 'max'],
+  ['review the payment module', 'max'],
+  ['audit the authentication flow', 'max'],
+  ['please verify the migration output', 'max'],
   ['check if the server is still running', 'high'],
   ['confirm the output folder is correct', 'high'],
   ['refactor the auth module', 'high'],
@@ -124,6 +127,8 @@ check((await attach.request({}, async () => ({ provider: 'p', model: 'm', reason
 check(classify('hi', { socialEffort: 'offf' }).level === 'off', 'invalid socialEffort falls back to the default');
 check(classify('brainstorm ideas', { ideationEffort: 'ultra' }).level === 'max', 'invalid ideationEffort falls back to the default');
 check(classify('plan the release', { planningEffort: 'EXTREME' }).level === 'max', 'invalid planningEffort falls back to the default');
+check(classify('review the diff', { reviewEffort: 'high' }).level === 'high', 'reviewEffort high makes reviews cheap');
+check(classify('review the diff', { reviewEffort: 'nope' }).level === 'max', 'invalid reviewEffort falls back to the default');
 
 console.log(`\nfailures: ${failures}`);
 process.exitCode = failures === 0 ? 0 : 1;

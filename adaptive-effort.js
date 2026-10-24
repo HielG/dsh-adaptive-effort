@@ -37,6 +37,8 @@ const DEFAULTS = {
   ideationEffort: 'max',
   /** Planning/spec work shapes the build the same way; lower it if plans feel routine. */
   planningEffort: 'max',
+  /** Review/verification work; 'high' makes code reviews cheaper. */
+  reviewEffort: 'max',
   /** Append one line per decision to %TEMP%\dsh-adaptive-effort.log. */
   debug: true,
 };
@@ -76,6 +78,9 @@ const LEVELS = new Set(['off', 'low', 'high', 'max']);
 /** Planning and specification: the same "pay once, inherit afterwards" shape. */
 const PLANNING = /\b(?:plan|plans|planning|roadmap\w*|milestone\w*|scope|phases?|architect\w*|blueprint\w*|specs?|specification\w*|prd|design docs?|backlog|tech stack)\b/g;
 
+/** Review and verification: judging existing work, where a missed defect is costly. */
+const REVIEW = /\b(?:review\w*|audit\w*|verif\w*|critique\w*)\b/g;
+
 /** Count matches of one global pattern; `String.match` ignores `lastIndex`. */
 function count(text, pattern) {
   return (text.match(pattern) || []).length;
@@ -91,7 +96,7 @@ export function classify(text, config) {
   const cfg = { ...DEFAULTS, ...(config || {}) };
   // A typo in the profile patch must not reach the adapter: it would reject the
   // request with UNSUPPORTED_REASONING_EFFORT and fail the whole turn.
-  for (const key of ['socialEffort', 'ideationEffort', 'planningEffort']) {
+  for (const key of ['socialEffort', 'ideationEffort', 'planningEffort', 'reviewEffort']) {
     if (!LEVELS.has(cfg[key])) cfg[key] = DEFAULTS[key];
   }
   const trimmed = String(text ?? '').trim();
@@ -104,6 +109,7 @@ export function classify(text, config) {
   const judgment = count(lower, JUDGMENT);
   const ideation = count(lower, IDEATION);
   const planning = count(lower, PLANNING);
+  const review = count(lower, REVIEW);
 
   if (isSocial(trimmed)) return { level: cfg.socialEffort, reason: 'social' };
   if (WANTS_MAX.test(lower)) return { level: 'max', reason: 'explicit-max' };
@@ -113,6 +119,7 @@ export function classify(text, config) {
   // Seed work runs before the code check: "plan this" over a paste still plans.
   if (planning > 0) return { level: cfg.planningEffort, reason: 'planning' };
   if (ideation > 0) return { level: cfg.ideationEffort, reason: 'ideation' };
+  if (review > 0) return { level: cfg.reviewEffort, reason: 'review' };
   // Pasted code without a complexity cue still deserves the standard budget.
   if (hasCode) return { level: 'high', reason: 'code' };
   if (WANTS_LOW.test(lower) && complexity === 0) return { level: 'low', reason: 'explicit-low' };

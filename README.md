@@ -8,8 +8,9 @@ turn** instead of pinning one level for the whole session.
 | --- | --- | --- |
 | "hi", "thanks!", "ok 👍" | `off` | no reasoning, and no chain-of-thought passed back into later requests |
 | "what's the latest version?", "rename the folder", "show the files" | `low` | short, no complexity cue, no judgment verb |
-| "fix the bug", "add a button", "verify the migration", "check the output", "why does it drop connections?" | `high` | judgment work; the harness default |
+| "fix the bug", "add a button", "check the output", "why does it drop connections?" | `high` | judgment work; the harness default |
 | "brainstorm ideas", "enrich this concept", "positioning for X", "plan the migration", "write a roadmap", "draft the spec" | `max` | seed work: the vision and plan every later turn inherits |
+| "review the payment module", "audit the auth flow", "verify the migration" | `max` | judging existing work, where a missed defect costs more than the thinking |
 | code pasted with a complexity cue, ≥ 3 complexity cues, ≥ 900 chars with 2 cues, or an explicit "think hard" / "max effort" | `max` | genuine complexity, or you asked for it |
 
 An explicit `off` selected in the UI is never overridden. A model that reports no
@@ -88,6 +89,7 @@ add a normal patch entry to the profile's `cordis.patch.yml`:
 | `socialEffort` | `off` | Level for social turns; set `low` if you never want thinking disabled |
 | `ideationEffort` | `max` | Level for concept work (brainstorm, idealize, enrich, positioning); set `high` if max feels heavy |
 | `planningEffort` | `max` | Level for plans, roadmaps, milestones, specs, architecture; set `high` for routine plans |
+| `reviewEffort` | `max` | Level for review, audit, verify, critique; set `high` to make routine reviews cheaper |
 | `debug` | `true` | One line per decision in `%TEMP%\dsh-adaptive-effort.log` |
 
 An effort value outside `off | low | high | max` falls back to the built-in
