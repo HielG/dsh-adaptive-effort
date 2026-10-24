@@ -27,6 +27,9 @@ const cases = [
   ['plan the migration of the payments service', 'max'],
   ['write a roadmap for Q1 with milestones', 'max'],
   ['draft the spec for the onboarding flow', 'max'],
+  ['be specific about the output format', 'low'],
+  ['the planned outage is tomorrow', 'low'],
+  ['draw a sequence diagram for the handshake', 'low'],
 ];
 
 let failures = 0;
@@ -103,6 +106,24 @@ check(untouched.reasoningEffort === 'off', 'a user-selected off on a fresh agent
 const noStep = newAgent();
 const noStepResult = await noStep.request({}, async () => ({ provider: 'p', model: 'm', reasoningEffort: 'high' }));
 check(noStepResult.reasoningEffort === 'high', 'agent without a classified step keeps its effort');
+
+// An attachment-only turn must not inherit the previous turn's low budget.
+const attach = newAgent();
+await attach.preStep(
+  { turn: 1, messages: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }], step: 1 },
+  async () => ({ kind: 'enter', messages: [] }),
+);
+check((await attach.request({}, async () => ({ provider: 'p', model: 'm', reasoningEffort: 'high' }))).reasoningEffort === 'off', 'social turn sets off before the attachment turn');
+await attach.preStep(
+  { turn: 2, messages: [{ role: 'user', content: [{ type: 'image' }] }], step: 1 },
+  async () => ({ kind: 'enter', messages: [] }),
+);
+check((await attach.request({}, async () => ({ provider: 'p', model: 'm', reasoningEffort: 'off' }))).reasoningEffort === 'high', 'attachment-only turn falls back to high');
+
+// Unrecognized effort values must never reach the adapter.
+check(classify('hi', { socialEffort: 'offf' }).level === 'off', 'invalid socialEffort falls back to the default');
+check(classify('brainstorm ideas', { ideationEffort: 'ultra' }).level === 'max', 'invalid ideationEffort falls back to the default');
+check(classify('plan the release', { planningEffort: 'EXTREME' }).level === 'max', 'invalid planningEffort falls back to the default');
 
 console.log(`\nfailures: ${failures}`);
 process.exitCode = failures === 0 ? 0 : 1;

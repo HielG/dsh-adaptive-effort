@@ -70,8 +70,11 @@ const WANTS_LOW = /(?:quick(?:ly)?|simple|one-?liner|short answer|tl;?dr|just te
  */
 const IDEATION = /\b(?:brainstorm\w*|ideat\w*|idealiz\w*|concept\w*|ideas?|vision|positioning|value proposition|differentiat\w*|narrative|personas?|business models?|go-to-market|pitch\w*|enrich\w*)\b/g;
 
+/** The only levels the DeepSeek adapter accepts. Anything else fails the request. */
+const LEVELS = new Set(['off', 'low', 'high', 'max']);
+
 /** Planning and specification: the same "pay once, inherit afterwards" shape. */
-const PLANNING = /\b(?:plan(?:s|ning|ned)?|roadmap\w*|milestone\w*|scope|phases?|architect\w*|blueprint\w*|spec\w*|prd|design docs?|backlog|sequenc\w*|tech stack)\b/g;
+const PLANNING = /\b(?:plan|plans|planning|roadmap\w*|milestone\w*|scope|phases?|architect\w*|blueprint\w*|specs?|specification\w*|prd|design docs?|backlog|tech stack)\b/g;
 
 /** Count matches of one global pattern; `String.match` ignores `lastIndex`. */
 function count(text, pattern) {
@@ -86,6 +89,11 @@ function count(text, pattern) {
  */
 export function classify(text, config) {
   const cfg = { ...DEFAULTS, ...(config || {}) };
+  // A typo in the profile patch must not reach the adapter: it would reject the
+  // request with UNSUPPORTED_REASONING_EFFORT and fail the whole turn.
+  for (const key of ['socialEffort', 'ideationEffort', 'planningEffort']) {
+    if (!LEVELS.has(cfg[key])) cfg[key] = DEFAULTS[key];
+  }
   const trimmed = String(text ?? '').trim();
   if (trimmed.length === 0) return { level: undefined, reason: 'empty' };
 
@@ -138,7 +146,7 @@ function latestUserText(messages) {
 export function apply(ctx, config) {
   const options = { ...DEFAULTS, ...(config || {}) };
   const states = new WeakMap();
-  const disposers = new Map();
+  const disposers = new Set();
 
   const log = (line) => {
     if (!options.debug) return;
@@ -157,19 +165,29 @@ export function apply(ctx, config) {
         if (!agent || agent.ctx === undefined || states.has(agent)) return;
         // `applied` remembers our own last override so an explicit user `off`
         // stays untouched while our own `off` can be escalated again.
-        const state = { prompt: undefined, level: undefined, applied: undefined };
+        const state = { prompt: undefined, level: undefined, applied: undefined, turn: undefined };
         states.set(agent, state);
 
         const dispose = agent.ctx.effect(() => {
           const offStep = agent.ctx.on('agent/pre-step', async (payload, next) => {
             const decision = await next();
             try {
+              const turn = payload && payload.turn;
               const text = latestUserText(payload && payload.messages);
+              // An attachment-only turn has no text to judge; keep the standard
+              // budget instead of inheriting whatever the previous turn used.
+              if (turn !== undefined && turn !== state.turn) {
+                state.turn = turn;
+                if (text === undefined) {
+                  state.level = 'high';
+                  log(`turn=${turn} level=high reason=no-text`);
+                }
+              }
               if (text !== undefined && text !== state.prompt) {
                 state.prompt = text;
                 const verdict = classify(text, options);
                 state.level = verdict.level;
-                log(`turn=${payload?.turn ?? '?'} level=${verdict.level} reason=${verdict.reason} chars=${text.length}`);
+                log(`turn=${turn ?? '?'} level=${verdict.level} reason=${verdict.reason} chars=${text.length}`);
               }
             } catch {
               // Classification must never fail a step.
@@ -201,7 +219,7 @@ export function apply(ctx, config) {
             offRequest();
           };
         });
-        disposers.set(agent, dispose);
+        disposers.add(dispose);
       } catch {
         // Never break agent creation.
       }
@@ -209,7 +227,7 @@ export function apply(ctx, config) {
 
     return () => {
       offCreated();
-      for (const dispose of disposers.values()) {
+      for (const dispose of disposers) {
         try {
           dispose();
         } catch {

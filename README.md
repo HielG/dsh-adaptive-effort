@@ -90,6 +90,9 @@ add a normal patch entry to the profile's `cordis.patch.yml`:
 | `planningEffort` | `max` | Level for plans, roadmaps, milestones, specs, architecture; set `high` for routine plans |
 | `debug` | `true` | One line per decision in `%TEMP%\dsh-adaptive-effort.log` |
 
+An effort value outside `off | low | high | max` falls back to the built-in
+default, so a typo in the patch cannot fail a request.
+
 The debug log records the reason, so spend is auditable:
 
 ```
